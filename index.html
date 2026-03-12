@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+  />
+  <title>Magic Tiles Extreme</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(180deg, #8fd8ff 0%, #bfefff 55%, #e5f8ff 100%);
+      touch-action: manipulation;
+    }
+
+    body {
+      position: relative;
+    }
+
+    #app {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    #topBar {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      z-index: 20;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .statBox {
+      background: rgba(255,255,255,0.72);
+      color: #0b2f4a;
+      border-radius: 14px;
+      padding: 10px 14px;
+      min-width: 92px;
+      text-align: center;
+      font-weight: 700;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+      backdrop-filter: blur(6px);
+      pointer-events: auto;
+    }
+
+    .statLabel {
+      font-size: 12px;
+      opacity: 0.75;
+      margin-bottom: 4px;
+    }
+
+    .statValue {
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    #gameWrap {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+    }
+
+    #game {
+      position: relative;
+      width: min(100vw, 520px);
+      height: 100%;
+      overflow: hidden;
+      background:
+        linear-gradient(
+          180deg,
+          rgba(255,255,255,0.20) 0%,
+          rgba(255,255,255,0.06) 18%,
+          rgba(255,255,255,0.02) 100%
+        );
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.25) inset,
+        0 0 40px rgba(0,0,0,0.06) inset;
+    }
+
+    .lane {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 25%;
+      border-left: 1px solid rgba(20, 72, 108, 0.18);
+      border-right: 1px solid rgba(255, 255, 255, 0.12);
+      touch-action: manipulation;
+    }
+
+    .lane::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        180deg,
+        rgba(255,255,255,0.06),
+        rgba(255,255,255,0.00)
+      );
+      pointer-events: none;
+    }
+
+    .lane.activeTap {
+      background: rgba(255,255,255,0.12);
+    }
+
+    #lane0 { left: 0%; }
+    #lane1 { left: 25%; }
+    #lane2 { left: 50%; }
+    #lane3 { left: 75%; }
+
+    #hitLine {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 120px;
+      height: 6px;
+      background: linear-gradient(90deg, rgba(255,255,255,0), #ffffff, rgba(255,255,255,0));
+      opacity: 0.85;
+      box-shadow: 0 0 18px rgba(255,255,255,0.9);
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    #earlyZone {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 120px;
+      height: 260px;
+      background: linear-gradient(
+        180deg,
+        rgba(255,255,255,0.00) 0%,
+        rgba(255,255,255,0.05) 100%
+      );
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .tile {
+      position: absolute;
+      left: 0;
+      width: calc(100% - 10px);
+      margin-left: 5px;
+      border-radius: 10px;
+      background: linear-gradient(180deg, #111 0%, #000 100%);
+      box-shadow:
+        0 10px 24px rgba(0,0,0,0.30),
+        0 0 0 1px rgba(255,255,255,0.06) inset;
+      z-index: 8;
+    }
+
+    .tile::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 10px;
+      background: linear-gradient(
+        180deg,
+        rgba(255,255,255,0.08),
+        rgba(255,255,255,0.00)
+      );
+      pointer-events: none;
+    }
+
+    #menu {
+      position: absolute;
+      inset: 0;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        linear-gradient(
+          180deg,
+          rgba(143,216,255,0.42),
+          rgba(191,239,255,0.26)
+        );
+      backdrop-filter: blur(6px);
+    }
+
+    #menuCard {
+      width: min(92vw, 420px);
+      background: rgba(255,255,255,0.82);
+      border-radius: 20px;
+      padding: 24px 18px 18px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+    }
+
+    #title {
+      margin: 0 0 10px;
+      font-size: 34px;
+      color: #0b2f4a;
+      letter-spacing: 0.5px;
+    }
+
+    #subtitle {
+      margin: 0 0 18px;
+      color: #245879;
+      font-size: 15px;
+    }
+
+    .menuBtn {
+      width: 100%;
+      border: none;
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-top: 10px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    #startBtn {
+      background: linear-gradient(180deg, #1b8cff, #006ce0);
+      color: white;
+      box-shadow: 0 10px 24px rgba(0,108,224,0.28);
+    }
+
+    #restartBtn {
+      background: linear-gradient(180deg, #ffffff, #e8f5ff);
+      color: #0b2f4a;
+      border: 1px solid rgba(11,47,74,0.12);
+    }
+
+    #statusText {
+      min-height: 22px;
+      margin-top: 12px;
+      color: #0b2f4a;
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    #helpText {
+      margin-top: 12px;
+      color: #2b5a78;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    #bottomFeedback {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 180px;
+      text-align: center;
+      z-index: 25;
+      pointer-events: none;
+      font-weight: 800;
+      color: #ffffff;
+      text-shadow: 0 3px 12px rgba(0,0,0,0.25);
+      font-size: 32px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: 0.15s ease;
+    }
+
+    #bottomFeedback.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    #fileNote {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #4e7088;
+    }
+
+    @media (max-width: 480px) {
+      #title {
+        font-size: 28px;
+      }
+
+      .statValue {
+        font-size: 18px;
+      }
+
+      #bottomFeedback {
+        font-size: 26px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div id="topBar">
+      <div class="statBox">
+        <div class="statLabel">SCOR</div>
+        <div class="statValue" id="scoreValue">0</div>
+      </div>
+      <div class="statBox">
+        <div class="statLabel">COMBO</div>
+        <div class="statValue" id="comboValue">0</div>
+      </div>
+      <div class="statBox">
+        <div class="statLabel">MAX</div>
+        <div class="statValue" id="maxComboValue">0</div>
+      </div>
+    </div>
+
+    <div id="gameWrap">
+      <div id="game">
+        <div id="lane0" class="lane" data-lane="0"></div>
+        <div id="lane1" class="lane" data-lane="1"></div>
+        <div id="lane2" class="lane" data-lane="2"></div>
+        <div id="lane3" class="lane" data-lane="3"></div>
+
+        <div id="earlyZone"></div>
+        <div id="hitLine"></div>
+      </div>
+    </div>
+
+    <div id="bottomFeedback"></div>
+
+    <div id="menu">
+      <div id="menuCard">
+        <h1 id="title">Magic Tiles Extreme</h1>
+        <p id="subtitle">Touch pe coloană • Universal • Rapid • Extreme</p>
+        <button id="startBtn" class="menuBtn">START</button>
+        <button id="restartBtn" class="menuBtn">RESTART</button>
+        <div id="statusText">Pregătit</div>
+        <div id="helpText">
+          Pune melodia în același folder cu acest fișier și lasă numele exact:
+          <br><b>AUDIO-2026-02-21-18-41-33.mp3</b>
+        </div>
+        <div id="fileNote">Tap pe coloana în care vezi tile-ul negru.</div>
+      </div>
+    </div>
+
+    <audio id="music" preload="auto"></audio>
+  </div>
+
+  <script>
+    const AUDIO_FILE = "AUDIO-2026-02-21-18-41-33.mp3";
+
+    const game = document.getElementById("game");
+    const lanes = [...document.querySelectorAll(".lane")];
+    const startBtn = document.getElementById("startBtn");
+    const restartBtn = document.getElementById("restartBtn");
+    const menu = document.getElementById("menu");
+    const statusText = document.getElementById("statusText");
+    const scoreValue = document.getElementById("scoreValue");
+    const comboValue = document.getElementById("comboValue");
+    const maxComboValue = document.getElementById("maxComboValue");
+    const feedback = document.getElementById("bottomFeedback");
+    const music = document.getElementById("music");
+
+    music.src = AUDIO_FILE;
+    music.volume = 1.0;
+
+    let score = 0;
+    let combo = 0;
+    let maxCombo = 0;
+    let running = false;
+    let animationId = null;
+    let spawnIntervalId = null;
+    let lastFrame = 0;
+    let gameOver = false;
+
+    const tiles = [];
+
+    const laneWidthPercent = 25;
+    const tileHeight = 140;
+    const minSpawnMs = 165;
+    const maxSpawnMs = 250;
+
+    const speedPxPerSecond = 980;
+    const hitLineBottom = 120;
+
+    const earlyHitWindowPx = 360;
+    const perfectWindowPx = 80;
+    const goodWindowPx = 170;
+    const lateMissExtraPx = 90;
+
+    function randomBetween(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    function randomLane() {
+      return Math.floor(Math.random() * 4);
+    }
+
+    function updateStats() {
+      scoreValue.textContent = score;
+      comboValue.textContent = combo;
+      maxComboValue.textContent = maxCombo;
+    }
+
+    function showFeedback(text) {
+      feedback.textContent = text;
+      feedback.classList.add("show");
+      clearTimeout(showFeedback._t);
+      showFeedback._t = setTimeout(() => {
+        feedback.classList.remove("show");
+      }, 170);
+    }
+
+    function clearTiles() {
+      while (tiles.length) {
+        const t = tiles.pop();
+        if (t.el && t.el.parentNode) t.el.parentNode.removeChild(t.el);
+      }
+    }
+
+    function resetGameState() {
+      score = 0;
+      combo = 0;
+      maxCombo = 0;
+      running = false;
+      gameOver = false;
+      lastFrame = 0;
+      updateStats();
+      clearTiles();
+      if (animationId) cancelAnimationFrame(animationId);
+      if (spawnIntervalId) clearTimeout(spawnIntervalId);
+      animationId = null;
+      spawnIntervalId = null;
+      music.pause();
+      music.currentTime = 0;
+    }
+
+    function getGameHeight() {
+      return game.clientHeight;
+    }
+
+    function createTile(laneIndex) {
+      const lane = lanes[laneIndex];
+      const tile = document.createElement("div");
+      tile.className = "tile";
+      tile.style.height = tileHeight + "px";
+      tile.style.top = -tileHeight + "px";
+      lane.appendChild(tile);
+
+      tiles.push({
+        lane: laneIndex,
+        el: tile,
+        y: -tileHeight,
+        h: tileHeight,
+        active: true
+      });
+    }
+
+    function spawnLoop() {
+      if (!running) return;
+
+      createTile(randomLane());
+
+      const next = randomBetween(minSpawnMs, maxSpawnMs);
+      spawnIntervalId = setTimeout(spawnLoop, next);
+    }
+
+    function laneTapEffect(index) {
+      const lane = lanes[index];
+      lane.classList.add("activeTap");
+      clearTimeout(laneTapEffect["t" + index]);
+      laneTapEffect["t" + index] = setTimeout(() => {
+        lane.classList.remove("activeTap");
+      }, 80);
+    }
+
+    function findBestTileForLane(laneIndex) {
+      const gameHeight = getGameHeight();
+      const hitY = gameHeight - hitLineBottom;
+
+      let best = null;
+      let bestDistance = Infinity;
+
+      for (const tile of tiles) {
+        if (!tile.active) continue;
+        if (tile.lane !== laneIndex) continue;
+
+        const tileBottom = tile.y + tile.h;
+        const distance = Math.abs(tileBottom - hitY);
+
+        const isEarlyHittable = tileBottom >= hitY - earlyHitWindowPx;
+        const isTooLate = tileBottom > hitY + lateMissExtraPx;
+
+        if (isEarlyHittable && !isTooLate) {
+          if (distance < bestDistance) {
+            best = tile;
+            bestDistance = distance;
+          }
+        }
+      }
+
+      return best;
+    }
+
+    function removeTile(tile) {
+      tile.active = false;
+      const idx = tiles.indexOf(tile);
+      if (idx !== -1) tiles.splice(idx, 1);
+      if (tile.el && tile.el.parentNode) tile.el.parentNode.removeChild(tile.el);
+    }
+
+    function hitLane(laneIndex) {
+      if (!running || gameOver) return;
+
+      laneTapEffect(laneIndex);
+
+      const gameHeight = getGameHeight();
+      const hitY = gameHeight - hitLineBottom;
+      const tile = findBestTileForLane(laneIndex);
+
+      if (!tile) {
+        combo = 0;
+        updateStats();
+        showFeedback("MISS");
+        return;
+      }
+
+      const tileBottom = tile.y + tile.h;
+      const diff = Math.abs(tileBottom - hitY);
+
+      let gain = 0;
+      let text = "GOOD";
+
+      if (diff <= perfectWindowPx) {
+        gain = 20;
+        text = "PERFECT";
+      } else if (diff <= goodWindowPx || tileBottom < hitY) {
+        gain = 10;
+        text = "GOOD";
+      } else {
+        gain = 8;
+        text = "EARLY";
+      }
+
+      score += gain;
+      combo += 1;
+      if (combo > maxCombo) maxCombo = combo;
+
+      updateStats();
+      showFeedback(text);
+      removeTile(tile);
+    }
+
+    function endGame() {
+      running = false;
+      gameOver = true;
+      if (spawnIntervalId) clearTimeout(spawnIntervalId);
+      if (animationId) cancelAnimationFrame(animationId);
+      music.pause();
+      statusText.textContent = "Final! Scor: " + score + " | Combo maxim: " + maxCombo;
+      menu.style.display = "flex";
+    }
+
+    function update(timestamp) {
+      if (!running) return;
+
+      if (!lastFrame) lastFrame = timestamp;
+      const dt = (timestamp - lastFrame) / 1000;
+      lastFrame = timestamp;
+
+      const gameHeight = getGameHeight();
+      const hitY = gameHeight - hitLineBottom;
+
+      for (let i = tiles.length - 1; i >= 0; i--) {
+        const tile = tiles[i];
+        if (!tile.active) continue;
+
+        tile.y += speedPxPerSecond * dt;
+        tile.el.style.top = tile.y + "px";
+
+        const tileBottom = tile.y + tile.h;
+
+        if (tileBottom > hitY + lateMissExtraPx + 70) {
+          combo = 0;
+          updateStats();
+          showFeedback("MISS");
+          removeTile(tile);
+        }
+
+        if (tile.y > gameHeight + 40) {
+          endGame();
+          return;
+        }
+      }
+
+      animationId = requestAnimationFrame(update);
+    }
+
+    async function startGame() {
+      resetGameState();
+      menu.style.display = "none";
+      running = true;
+      statusText.textContent = "Rulează";
+
+      try {
+        music.currentTime = 0;
+        music.volume = 1.0;
+        await music.play();
+      } catch (err) {
+        statusText.textContent = "Nu pot porni melodia. Verifică dacă fișierul MP3 există.";
+      }
+
+      spawnLoop();
+      animationId = requestAnimationFrame(update);
+
+      music.onended = () => {
+        endGame();
+      };
+    }
+
+    function restartGame() {
+      resetGameState();
+      statusText.textContent = "Resetat";
+      menu.style.display = "flex";
+    }
+
+    lanes.forEach((lane, index) => {
+      lane.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        hitLane(index);
+      });
+
+      lane.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        hitLane(index);
+      }, { passive: false });
+
+      lane.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        hitLane(index);
+      });
+    });
+
+    startBtn.addEventListener("click", startGame);
+    restartBtn.addEventListener("click", restartGame);
+
+    document.addEventListener("keydown", (e) => {
+      if (e.code === "Space") {
+        e.preventDefault();
+        if (!running) startGame();
+      }
+    });
+
+    updateStats();
+  </script>
+</body>
+</html> 
