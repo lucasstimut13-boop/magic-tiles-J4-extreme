@@ -602,26 +602,30 @@
     }
 
     async function startGame() {
-      resetGameState();
-      menu.style.display = "none";
-      running = true;
-      statusText.textContent = "Rulează";
+  resetGameState();
+  menu.style.display = "none";
+  running = true;
+  statusText.textContent = "Rulează";
 
-      try {
-        music.currentTime = 0;
-        music.volume = 1.0;
-        await music.play();
-      } catch (err) {
-        statusText.textContent = "Nu pot porni melodia. Verifică dacă fișierul MP3 există.";
-      }
+  try {
+    music.src = AUDIO_FILE;
+    music.load();
+    music.volume = 1;
+    music.currentTime = 0;
+    await music.play();
+    statusText.textContent = "Melodia a pornit";
+  } catch (err) {
+    statusText.textContent = "Audio nu pornește. Verifică numele fișierului.";
+    console.log(err);
+  }
 
-      spawnLoop();
-      animationId = requestAnimationFrame(update);
+  spawnLoop();
+  animationId = requestAnimationFrame(update);
 
-      music.onended = () => {
-        endGame();
-      };
-    }
+  music.onended = () => {
+    endGame();
+  };
+}
 
     function restartGame() {
       resetGameState();
